@@ -30,56 +30,117 @@ using std::string;
 
 
 
-//////////////////////////////////////////////////////
-//  size parameter
-//////////////////////////////////////////////////////
- const double x = 20.0;
 
-//////////////////////////////////////////////////////
-//  refractive index of both sphere and environment.
-//////////////////////////////////////////////////////
-#if 1
-
-//  water droplet in air
-const complex<double> m1 = complex<double>(1.33, 0.0);
-const double m2 = 1.00;
-
-#elif 0
-
-//  gas bubble in water
-const complex<double> m1 = complex<double>(1.00, 0.0);
-const double m2 = 1.33;
-
-#else 
-
-//  absorbing sphere
-const complex<double> m1 = complex<double>(1.33, -0.0);
-const double m2 = 1.00;
-
-#endif
-
-//////////////////////////////////////////////////////
-//  number of anguler division
-//
-//  e.g.
-//
-//  181 = 1.0 deg/div
-//  1801 = 0.1 deg/div
-//  18001 = 0.01 deg/div
-//////////////////////////////////////////////////////
-const int N_ANG = 181;
-
-
+int ktmie(
+    const double x,                 //  size parameter
+    const complex<double> m,        //  refractive index
+    const int N_ANG,                //  number of angle
+    vector<complex<double> >& S1,   //  return value
+    vector<complex<double> >& S2    //  return value
+);
 
 
 int main(int argc, char* argv[])
 {
+    //////////////////////////////////////////////////////
+    //  size parameter
+    //////////////////////////////////////////////////////
+    const double x = 100.0;
+
+    //////////////////////////////////////////////////////
+    //  refractive index of both sphere and environment.
+    //////////////////////////////////////////////////////
+#if 1
+
+    //  water droplet in air
+    const complex<double> m1 = complex<double>(1.33, 0.0);
+    const double m2 = 1.00;
+
+#elif 0
+
+    //  gas bubble in water
+    const complex<double> m1 = complex<double>(1.00, 0.0);
+    const double m2 = 1.33;
+
+#else 
+
+    //  absorbing sphere
+    const complex<double> m1 = complex<double>(1.33, -0.0);
+    const double m2 = 1.00;
+
+#endif
+
+    //////////////////////////////////////////////////////
+    //  number of anguler division
+    //
+    //  e.g.
+    //
+    //  181 = 1.0 deg/div
+    //  1801 = 0.1 deg/div
+    //  18001 = 0.01 deg/div
+    //////////////////////////////////////////////////////
+    const int N_ANG = 1801;
+
+
+
     //////////////////////////////////
     //
     //  parameters of physical values
     //
     const complex<double> m = m1/m2;
 
+
+
+    vector<complex<double> > S1;
+    vector<complex<double> > S2;
+
+
+    ktmie(x, m, N_ANG, S1, S2);
+
+
+    if(1) {
+        string fname = "ktmie.csv";
+        ofstream ofs(fname);
+        if(!ofs) {
+            cerr << "ERROR: fail to open " << fname << endl;
+            return 1;
+        }
+        ofs << "x=," << x << "\n";
+        ofs << "m1=," << m1.real() << "," << m1.imag() << "\n";
+        ofs << "m2=," << m2 << "\n";
+        ofs << "Nun of Angles=," << N_ANG << "\n";
+        ofs << "\n";
+        
+        //  write data
+        ofs << "theta,i1,i2,log10(i1),log10(i2)\n\n";
+        for(int i=0; i<N_ANG; i++) {
+            ofs << i / (N_ANG-1) * 180 << "," // in degree
+                << norm(S1[i]) << "," 
+                << norm(S2[i]) << ","
+                << log10(norm(S1[i])) << ","
+                << log10(norm(S2[i])) << "\n";
+        }
+        ofs << "\n";
+
+        ofs.close();
+    }
+
+    return 0;
+}
+
+
+
+
+
+
+int ktmie(
+    const double x,                 //  size parameter
+    const complex<double> m,        //  refractive index
+    const int N_ANG,                //  number of angle
+    vector<complex<double> >& S1,   //  return value
+    vector<complex<double> >& S2    //  return value
+)
+{
 
     /////////////////////////////////
     //
@@ -101,18 +162,15 @@ int main(int argc, char* argv[])
     //  relative complex refractive index
     const complex<double> y = m * x;
 
-
     //  iteration limit number
     const int n_end = x+4*pow(x,1.0/3.0)+2 + 50;
-
 
     //  if the delta S becomes very small, end the iteration
     const double EPS = 1.0e-10;
 
-
     //  Array of S1 and S2
-    vector<complex<double> > S1(theta.size(), complex<double>(0.0, 0.0));
-    vector<complex<double> > S2(theta.size(), complex<double>(0.0, 0.0));
+    S1.resize(theta.size(), complex<double>(0.0, 0.0));
+    S2.resize(theta.size(), complex<double>(0.0, 0.0));
 
 
 
@@ -325,34 +383,6 @@ int main(int argc, char* argv[])
             cout << "\n";
         }
 
-    }
-
-
-    if(1) {
-        string fname = "out.csv";
-        ofstream ofs(fname);
-        if(!ofs) {
-            cerr << "ERROR: fail to open " << fname << endl;
-            return 1;
-        }
-        ofs << "x=," << x << "\n";
-        ofs << "m1=," << m1.real() << "," << m1.imag() << "\n";
-        ofs << "m2=," << m2 << "\n";
-        ofs << "Nun of Angles=," << N_ANG << "\n";
-        ofs << "\n";
-        
-        //  write data
-        ofs << "theta,i1,i2,log10(i1),log10(i2)\n\n";
-        for(int i=0; i<theta.size(); i++) {
-            ofs << theta[i]*180/M_PI << "," 
-                << norm(S1[i]) << "," 
-                << norm(S2[i]) << ","
-                << log10(norm(S1[i])) << ","
-                << log10(norm(S2[i])) << "\n";
-        }
-        ofs << "\n";
-
-        ofs.close();
     }
 
     return 0;
