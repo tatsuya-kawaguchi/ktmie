@@ -114,7 +114,7 @@ int main(int argc, char* argv[])
         //  write data
         ofs << "theta,i1,i2,log10(i1),log10(i2)\n\n";
         for(int i=0; i<N_ANG; i++) {
-            ofs << i / (N_ANG-1) * 180 << "," // in degree
+            ofs << (double)i / (N_ANG-1) * 180 << "," // in degree
                 << norm(S1[i]) << "," 
                 << norm(S2[i]) << ","
                 << log10(norm(S1[i])) << ","
